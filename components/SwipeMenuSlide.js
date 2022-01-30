@@ -17,6 +17,7 @@ import SwiperCore, {
   Navigation
 } from 'swiper';
 import Image from "next/image";
+import db from "./db";
 
 // install Swiper modules
 SwiperCore.use([Navigation]);
@@ -50,7 +51,7 @@ const ImageButton = styled(ButtonBase)(({ theme }) => ({
 
 
 export default function SwipeMenuSlide() {
-  
+  const [foods, setFoods] = useState(db.foods);
   
   
   return (
@@ -72,15 +73,15 @@ export default function SwipeMenuSlide() {
         //   }}
     >
         {
-            ['Noodles', 'Biryani', 'Bengali', 'Pizza', 'Sandwich' , 'South Indian', 'Rolls', 'Momos', 'Kebabs', 'Fries']
-            .map((food, index)=>
+            // ['Noodles', 'Biryani', 'Bengali', 'Pizza', 'Sandwich' , 'South Indian', 'Rolls', 'Momos', 'Kebabs', 'Fries']
+            foods.map((food, index)=>
                 <SwiperSlide key={index}>
                     <ImageButton >
                         <Box sx={{width:'100px', height:'100px', position:'relative'}}>
                             <Image className='swipermenu-img' src={demo} layout='fill' />
                         </Box>
                         <Typography variant='span' sx={{marginTop:'8px'}}>
-                            {food}
+                            {food.name}
                         </Typography>
                     </ImageButton>
                     

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -21,6 +21,8 @@ import Tooltip from '@mui/material/Tooltip';
 import PersonAdd from '@mui/icons-material/PersonAdd';
 import Settings from '@mui/icons-material/Settings';
 import Logout from '@mui/icons-material/Logout';
+import { signIn, signOut, useSession } from 'next-auth/react';
+
 const StyledIconButton = styled(IconButton)(({theme}) => ({
   borderRadius:'0px'
 }))
@@ -114,7 +116,9 @@ function ScrollTop(props) {
 
 
 export default function Navbar(props) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const { data: session, status } = useSession()
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -123,19 +127,28 @@ export default function Navbar(props) {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  useEffect(()=>{
+    
+    // console.log(session)
+  },[])
+
   return (
     <React.Fragment>
+
       <CssBaseline />
       <AppBar color='primary'>
         <Toolbar sx={{display:'flex', justifyContent:'space-between'}}>
-          {/* <Typography variant="h6" component="div">
-            Scroll to see button
-          </Typography> */}
-          <Link href="/">
-            <Box sx={{width:'64px', height:'64px', position:'relative', cursor:'pointer'}}>
-              <Image src='/logo.png' layout='fill' priority='true'/>
-            </Box>
-          </Link>
+          <Box sx={{display:'flex', alignItems:'center'}}>
+            <Link href="/">
+              <Box sx={{width:'64px', height:'64px', position:'relative', cursor:'pointer'}}>
+                <Image src='/logo.png' layout='fill' priority='true'/>
+              </Box>
+            </Link>
+            <Typography variant="h6" component="div" sx={{marginLeft:'8px', fontFamily:" 'Yuji Hentaigana Akari', cursive"}}>
+              Grab-A-Grub
+            </Typography>
+          </Box>
           <Search>
             <StyledInputBase
               placeholder="Search…"
@@ -146,92 +159,111 @@ export default function Navbar(props) {
             </SearchIconWrapper> */}
             <IconButton variant="contained" color='secondary'> <SearchIcon /> </IconButton>
           </Search>
-          <Box sx={{display:['none', 'flex'], width:'190px', justifyContent:'space-between', alignContent:'center'}}>
-           {
-              isLoggedIn
-              ?<>
+          <Box sx={{display:['none', 'flex'], 
+                    // width:`{$status==='authenticated'?'190px':'fit-content'}`   , 
+                    justifyContent:'space-between', 
+                    alignContent:'center'
+                  }}>
+           
+                {
+                  console.log(session, status)
+                }
+                {
+                  session==null && status==="unauthenticated" &&
+                  (<>
+                    <Link href='/cart'>
+                      <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
+                        <ShoppingCartOutlinedIcon /> 
+                      </IconButton>
+                    </Link>
+                    <span style={{width:8}}></span>
+                    <Button color="secondary" variant="contained" onClick={()=>signIn('google')}>Login</Button>
+                    </>
+                  )
+                }
+                {
+                  session!==null && status==="authenticated" &&
+                  (<>
+                    <Link href='/'>
+                      <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}>  
+                        <AccountBalanceWalletRoundedIcon /> 
+                      </IconButton>
+                    </Link> 
+                    <span style={{width:8}}></span>
+                    <Link href='/cart'>
+                      <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
+                        <ShoppingCartOutlinedIcon /> 
+                      </IconButton>
+                    </Link>
+                    <span style={{width:8}}></span>
+                    <IconButton variant="contained" color='secondary' onClick={handleClick}> 
+                      <Avatar alt="person avatar" src={session.user.image} />
+                    </IconButton>
+
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      onClick={handleClose}
+                      PaperProps={{
+                        elevation: 0,
+                        sx: {
+                          overflow: 'visible',
+                          filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                          mt: 1.5,
+                          '& .MuiAvatar-root': {
+                            width: 32,
+                            height: 32,
+                            ml: -0.5,
+                            mr: 1,
+                          },
+                          '&:before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            top: 0,
+                            right: 14,
+                            width: 10,
+                            height: 10,
+                            bgcolor: 'background.paper',
+                            transform: 'translateY(-50%) rotate(45deg)',
+                            zIndex: 0,
+                          },
+                        },
+                      }}
+                      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    >
+                      <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                        <Avatar /> {session.user.name}
+                      </MenuItem>
+                      {/* <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                        <Avatar /> My account
+                      </MenuItem> */}
+                      <Divider />
+                      {/* <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                        <ListItemIcon>
+                          <PersonAdd fontSize="small" />
+                        </ListItemIcon>
+                        Add another account
+                      </MenuItem> */}
+                      <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                        <ListItemIcon>
+                          <Settings fontSize="small" />
+                        </ListItemIcon>
+                        Settings
+                      </MenuItem>
+                      <MenuItem onClick={()=>signOut()} sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                        <ListItemIcon>
+                          <Logout fontSize="small" />
+                        </ListItemIcon>
+                        Logout
+                      </MenuItem>
+                    </Menu>
+                  </>)
               
-                <Link href='/'>
-                  <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
-                    
-                     <AccountBalanceWalletRoundedIcon /> 
-                    
-                  </IconButton>
-                </Link> 
-            
-                <Link href='/dd'>
-                  <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
-                    <ShoppingCartOutlinedIcon /> 
-                  </IconButton>
-                </Link>
-                <IconButton variant="contained" color='secondary' onClick={handleClick}> 
-                  <Avatar alt="Habul Da" src="https://www.diethelmtravel.com/wp-content/uploads/2016/04/bill-gates-wealthiest-person.jpg" />
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={handleClose}
-                  onClick={handleClose}
-                  PaperProps={{
-                    elevation: 0,
-                    sx: {
-                      overflow: 'visible',
-                      filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                      mt: 1.5,
-                      '& .MuiAvatar-root': {
-                        width: 32,
-                        height: 32,
-                        ml: -0.5,
-                        mr: 1,
-                      },
-                      '&:before': {
-                        content: '""',
-                        display: 'block',
-                        position: 'absolute',
-                        top: 0,
-                        right: 14,
-                        width: 10,
-                        height: 10,
-                        bgcolor: 'background.paper',
-                        transform: 'translateY(-50%) rotate(45deg)',
-                        zIndex: 0,
-                      },
-                    },
-                  }}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                >
-                  <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                    <Avatar /> Profile
-                  </MenuItem>
-                  <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                    <Avatar /> My account
-                  </MenuItem>
-                  <Divider />
-                  <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                    <ListItemIcon>
-                      <PersonAdd fontSize="small" />
-                    </ListItemIcon>
-                    Add another account
-                  </MenuItem>
-                  <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                    <ListItemIcon>
-                      <Settings fontSize="small" />
-                    </ListItemIcon>
-                    Settings
-                  </MenuItem>
-                  <MenuItem onClick={()=>setIsLoggedIn(false)} sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                    <ListItemIcon>
-                      <Logout fontSize="small" />
-                    </ListItemIcon>
-                    Logout
-                  </MenuItem>
-                </Menu>
-              </>
-              :<Link href='/'>
-                <Button color="secondary" variant="contained" onClick={()=>setIsLoggedIn(true)}>Login</Button>
-              </Link> 
-            }
+                  // <Button color="secondary" variant="contained" onClick={()=>signOut()}>Logout</Button>
+                }   
           </Box>
         </Toolbar>
       </AppBar>
