@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import PropTypes from 'prop-types';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -13,7 +13,7 @@ import Zoom from '@mui/material/Zoom';
 import { styled, alpha } from '@mui/material/styles';
 import Image from 'next/image'
 import Link from 'next/link'
-import { Avatar, Button, Divider, IconButton, InputBase, ListItemIcon, Menu, MenuItem } from '@mui/material';
+import { Avatar, Badge, Button, Divider, IconButton, InputBase, ListItemIcon, Menu, MenuItem } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
@@ -22,6 +22,10 @@ import PersonAdd from '@mui/icons-material/PersonAdd';
 import Settings from '@mui/icons-material/Settings';
 import Logout from '@mui/icons-material/Logout';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import useSWR from 'swr';
+import axios from 'axios';
+// import {AppWrapper, useAppContext} from './context';
+import { useAppContext } from '../components/context';
 
 const StyledIconButton = styled(IconButton)(({theme}) => ({
   borderRadius:'0px'
@@ -116,11 +120,20 @@ function ScrollTop(props) {
 
 
 export default function Navbar(props) {
-
+  const {state, setState} = useAppContext()
   const { data: session, status } = useSession()
   // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+  const fetcher_cart = url => axios.get(process.env.NEXT_PUBLIC_SERVER_URI+url).then(res => res.data)
+  //const fetch_customer = url => axios.post(process.env.NEXT_PUBLIC_SERVER_URI+url).then(res => res.data)
+    // const { data:cuisines, error } = useSWR('/allcuisines', fetcher_cuisine)
+  const { data:cart, error } = useSWR('getcart/61f4d3c628f51863665b43a7', fetcher_cart)
+  // const { data:customer, error:cus_err } = useSWR('customer/getcustomer/'+(session!==null && status==="authenticated")?session.user.email:null, fetch_customer)
+  const [cutomer, setCustomer] = useState(null)
+  
+ 
+  
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -129,9 +142,14 @@ export default function Navbar(props) {
   };
 
   useEffect(()=>{
-    
-    // console.log(session)
-  },[])
+    if(session!==null && status==="authenticated")
+    axios.post(process.env.NEXT_PUBLIC_SERVER_URI+'customer/getorcreatecustomer/', session.user)
+    .then(res => 
+      // console.log(res)
+      setState(prev=>({...prev, customer:res.data}))
+    )
+      // console.log(session)
+  },[status])
 
   return (
     <React.Fragment>
@@ -157,7 +175,7 @@ export default function Navbar(props) {
             {/* <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper> */}
-            <IconButton variant="contained" color='secondary'> <SearchIcon /> </IconButton>
+            <IconButton variant="contained" color='secondary'  > <SearchIcon /> </IconButton>
           </Search>
           <Box sx={{display:['none', 'flex'], 
                     // width:`{$status==='authenticated'?'190px':'fit-content'}`   , 
@@ -166,14 +184,16 @@ export default function Navbar(props) {
                   }}>
            
                 {
-                  console.log(session, status)
+                  // console.log(cart)
                 }
                 {
                   session==null && status==="unauthenticated" &&
                   (<>
                     <Link href='/cart'>
                       <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
-                        <ShoppingCartOutlinedIcon /> 
+                        
+                          <ShoppingCartOutlinedIcon /> 
+                   
                       </IconButton>
                     </Link>
                     <span style={{width:8}}></span>
@@ -192,12 +212,14 @@ export default function Navbar(props) {
                     <span style={{width:8}}></span>
                     <Link href='/cart'>
                       <IconButton variant="contained" color='secondary' sx={{height:'fit-content', alignSelf:'center'}}> 
-                        <ShoppingCartOutlinedIcon /> 
+                        <Badge badgeContent={(state.cart==undefined || state.cart==null)?0:state.cart.length} color="secondary" >
+                          <ShoppingCartOutlinedIcon /> 
+                        </Badge>
                       </IconButton>
                     </Link>
                     <span style={{width:8}}></span>
                     <IconButton variant="contained" color='secondary' onClick={handleClick}> 
-                      <Avatar alt="person avatar" src={session.user.image} />
+                      <Avatar alt="person avatar" src={state.customer!=null && state.customer.avatar!=''?state.customer.avatar:session.user.image} />
                     </IconButton>
 
                     <Menu
@@ -235,7 +257,7 @@ export default function Navbar(props) {
                       anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
                       <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
-                        <Avatar /> {session.user.name}
+                        <Avatar alt="person avatar" src={state.customer!=null && state.customer.avatar!=''?state.customer.avatar:session.user.image} /> {session.user.name}
                       </MenuItem>
                       {/* <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
                         <Avatar /> My account
@@ -247,6 +269,20 @@ export default function Navbar(props) {
                         </ListItemIcon>
                         Add another account
                       </MenuItem> */}
+                      {
+                        state.customer!=null && 'type' in state.customer && state.customer.type == 'admin'
+                        ?                   
+                          <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
+                            
+                            <ListItemIcon>
+                              <Settings fontSize="small" />
+                            </ListItemIcon>
+                            <Link href="/admin">
+                              Admin Panel
+                            </Link>
+                          </MenuItem>
+                        :''
+                      }
                       <MenuItem sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
                         <ListItemIcon>
                           <Settings fontSize="small" />
