@@ -9,7 +9,7 @@ import { Box, Button, Divider, Typography } from '@mui/material';
 function Search(props){
   const [result, setResult] = useState('')
   useEffect(()=>{
-    console.log(process.env.NEXT_PUBLIC_SERVER_URI+props.find)
+    // console.log(process.env.NEXT_PUBLIC_SERVER_URI+props.find)
     axios
     .get(process.env.NEXT_PUBLIC_SERVER_URI+props.find)
     // .then(res => {console.log(res.data); router.replace('/cuisine/'+res.data._id);})
@@ -60,11 +60,16 @@ const BMI = (props) => {
 //   return
 //   const search = steps.query.value
 //   console.log(steps.cuisine.value)
-  const query = 
-    steps.query.value == 1
-    ?'findcuisines/'+steps.cuisine.value
-    :'findfoods/'+steps.food.value
+  const query = ''
+  if( steps.query.value == 1 )
+    query = 'findcuisines/'+steps.cuisine.value
+  else if(steps.query.value == 2)
+    query = 'findfoods/'+steps.food.value
   
+  if (query=='')
+    return (
+      <></>
+    );
   return (
     <div className="test">
       Search Result: 
@@ -149,13 +154,12 @@ function BMIExample (){
             id: 'again',
             message: 'Do you want to search again?',
             trigger:'op'
-            
           },
           {
             id:'op',
             options: [
-                { value: 1, label: 'Yes', trigger: '1' },
-                { value: 2, label: 'No', trigger: '5' },
+                { value:3, label: 'Yes', trigger: '1' },
+                { value:4, label: 'No', trigger: '5' },
             ],
           }, 
           {

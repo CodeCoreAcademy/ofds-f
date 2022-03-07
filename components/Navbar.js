@@ -145,8 +145,9 @@ export default function Navbar(props) {
     if(session!==null && status==="authenticated")
     axios.post(process.env.NEXT_PUBLIC_SERVER_URI+'customer/getorcreatecustomer/', session.user)
     .then(res => 
-      // console.log(res)
-      setState(prev=>({...prev, customer:res.data}))
+     { 
+      //  console.log(res);
+      setState(prev=>({...prev, customer:res.data}))}
     )
       // console.log(session)
   },[status])
@@ -287,7 +288,9 @@ export default function Navbar(props) {
                         <ListItemIcon>
                           <Settings fontSize="small" />
                         </ListItemIcon>
-                        Settings
+                        <Link href='/personal'>
+                          Settings
+                        </Link>
                       </MenuItem>
                       <MenuItem onClick={()=>signOut()} sx={{':hover':{backgroundColor:'secondary.light', color:'white'}, transition:'0.3s'}}>
                         <ListItemIcon>

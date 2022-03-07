@@ -16,8 +16,8 @@ export function AppWrapper({ children }) {
       // console.log(state.customer)
       axios.get(process.env.NEXT_PUBLIC_SERVER_URI+'viewcart/'+state.customer._id)
       .then(res => {
-        // console.log(res.data._id)
-        setState(prev=>({...prev, cart_id:res.data._id, cart:res.data.cart}))
+        console.log(res)
+        setState(prev=>({...prev, cart_id:res.data==''?'':res.data._id, cart:res.data==''?[]:res.data.cart}))
       })
     }
   },[state.customer])

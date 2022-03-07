@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import db from '../../components/db';
 import { useSession } from "next-auth/react"
 import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';

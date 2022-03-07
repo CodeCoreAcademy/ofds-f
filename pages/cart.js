@@ -244,6 +244,11 @@ function CartTable(props) {
           subtotalprice += ele.quantity * ele.food.price
         })
         setSubtotal(subtotalprice)
+        props.setFinalCartData(prev=>({...prev, cgst:subtotalprice*2.5/100}))
+        props.setFinalCartData(prev=>({...prev, sgst:subtotalprice*2.5/100}))
+        props.setFinalCartData(prev=>({...prev, delivery_charge:subtotalprice*2/100}))
+        props.setFinalCartData(prev=>({...prev, grandtotal:(subtotalprice*2/100)+(subtotalprice*2.5/100)+(subtotalprice*2.5/100)+subtotalprice}))
+
       }
         
     },[state.cart])
@@ -257,9 +262,6 @@ function CartTable(props) {
 
     return (
       <Card sx={{ width: 350 }} raised={true}>
-        {
-          console.log(state.cart)
-        }
         <CardContent>
           <CardHeader title='Bill Information' sx={{backgroundColor:'secondary.dark', margin:0, color:'white'}}/>
           <Divider />
@@ -417,8 +419,8 @@ function CartTable(props) {
       setSelectedValue(event.target.value);
     };
     const controlProps = (item) => ({
-      checked: props.finalCartData.delivery_address._id == item._id,
-      onChange: ()=>props.setFinalCartData( (prev)=> ({...prev, delivery_address:item}) ),
+      checked: props.finalCartData.delivery_address == item._id,
+      onChange: ()=>props.setFinalCartData( (prev)=> ({...prev, delivery_address:item._id}) ),
       value: item,
       name: 'color-radio-button-demo',
       inputProps: { 'aria-label': item },
@@ -426,6 +428,9 @@ function CartTable(props) {
     
     return(
       <Box>
+        {
+          console.log(state)
+        }
         <FormControl sx={{width:'100%'}}>
           <FormLabel sx={{marginBottom:'20px'}} id="demo-form-control-label-placement">
             Select an address
@@ -468,8 +473,6 @@ function CartTable(props) {
                 // label="Pashupati Bhattacharya Rd, Srishti, Behala, Kolkata Pashupati Bhattacharya Rd, Srishti, Behala, Kolkata Pashupati Bhattacharya Rd, Srishti, Behala, Kolkata Pashupati Bhattacharya Rd, Srishti, Behala, Kolkata Pashupati Bhattacharya Rd, Srishti, Behala, Kolkata" 
                 label={
                   <Box sx={{ml:'10px'}}>
-                   
-                   
                     <Typography component="div">{ele.line1}</Typography>
                     <Typography component="div">{ele.line2}</Typography>
                     <Typography component="div">{ele.line3}</Typography>
@@ -517,12 +520,13 @@ function CartTable(props) {
   }
 
 export default function Cart() {
-    const { state } = useAppContext()
+    const { state, setState } = useAppContext()
     const { data: session, status } = useSession()
     // const [cart, setCart] = useState(db.orders.filter((ele)=> ele.cus_id == 1)[0].cart)
     const [finalCartData, setFinalCartData] = useState({
       cgst:0,
       sgst:0,
+      delivery_charge:0,
       grandtotal:0,
       delivery_address:'',
       order_date: new Date()
@@ -555,17 +559,7 @@ export default function Cart() {
         </Box>
       )
     }
-   
-    
-    // if (cartDataStatus === "unauthenticated") {
-    //   return(
-    //     <Box sx={{height:'90vh', width:'100%', display:'flex', justifyContent:'center', alignItems:'center'}}>
-    //       <Typography variant="h1">
-    //           Cannot get cart data
-    //       </Typography>
-    //     </Box>
-    //   )
-    // }
+
 
     // if(cartData==undefined || cartData.value=='undefined') {
     if( (state.cart != undefined || state.cart != null) && state.cart.length==0) {
@@ -600,6 +594,25 @@ export default function Cart() {
     //     </Box>
     //   )
     // }
+
+    const placeOrder = () => {
+      console.log(state.cart_id)
+      axios.post(process.env.NEXT_PUBLIC_SERVER_URI+'placeorder/', 
+            {
+                data:finalCartData,
+                id:state.cart_id
+            }
+        )
+        .then(function (response) {
+           console.log(response)
+           setState(prev=>({...prev, cart_id:'', cart:[]}))
+            console.log('order placed')
+            
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    }
 
     const totalSteps = () => {
       return steps.length;
@@ -676,10 +689,10 @@ export default function Cart() {
         //   ? 'loading' : cartData.customer.address
         // } 
       />,
-      <PaymentComponent 
-        // setFinalCartData={setFinalCartData}
-        // finalCartData={finalCartData}
-      />
+      // <PaymentComponent 
+      //   // setFinalCartData={setFinalCartData}
+      //   // finalCartData={finalCartData}
+      // />
     ]
 
     const action = (
@@ -702,7 +715,7 @@ export default function Cart() {
     return( 
         <div>
           {
-          // console.log(state)
+          console.log()
           }
           <Box sx={{display:'flex', mt:5, justifyContent:'space-around'}}>
             <Box sx={{width:'900px'}}>
@@ -717,12 +730,12 @@ export default function Cart() {
                 {allStepsCompleted() ? (
                   <React.Fragment>
                     <Typography sx={{ mt: 2, mb: 1 }}>
-                      All steps completed - you&apos;re finished
+                      Order Placed
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+                    {/* <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
                       <Box sx={{ flex: '1 1 auto' }} />
                       <Button onClick={handleReset}>Reset</Button>
-                    </Box>
+                    </Box> */}
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
@@ -746,10 +759,11 @@ export default function Cart() {
                         Back
                       </Button>
                       <Box sx={{ flex: '1 1 auto' }} />
+     
                       <Button variant='contained' onClick={handleNext} sx={{ mr: 1 }}>
                         Next
                       </Button>
-                      <Button variant='contained' disabled={activeStep+1 == steps.length?false:true}>Place Order</Button>
+                      <Button variant='contained' disabled={activeStep+1 == steps.length?false:true} onClick={placeOrder}>Place Order</Button>
                       {/* 
                       {activeStep !== steps.length &&
                         (completed[activeStep] ? (
@@ -771,7 +785,7 @@ export default function Cart() {
             </Box>                    
 
             <Box>
-              <GrandTotalCard />
+              <GrandTotalCard finalCartData={finalCartData} setFinalCartData={setFinalCartData} />
             </Box>
           </Box> 
 
